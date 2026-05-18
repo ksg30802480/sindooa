@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a3a5c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="견적서">
+<title>신도OA디지털 견적서</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--navy:#1a3a5c;--navy-dark:#0f2640;--navy-light:#eef3f8;--border:#ddd;--text:#1a1a1a;--muted:#777;--red:#e24b4a;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;background:#f0f0ea;color:var(--text);font-size:14px;}
+
+/* 탭 구조 */
+.app{display:flex;flex-direction:column;height:100vh;}
+.topbar{background:var(--navy);color:#fff;padding:12px 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.topbar h1{font-size:16px;font-weight:700;}
+.topbar .sub{font-size:10px;opacity:0.6;margin-top:2px;}
+.tabs{display:flex;background:var(--navy-dark);flex-shrink:0;}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:12px;color:rgba(255,255,255,0.6);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
+.tab.active{color:#fff;border-bottom-color:#fff;font-weight:600;}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.page{display:none;padding:14px 16px 80px;}
+.page.active{display:block;}
+
+/* 섹션 */
+.card{background:#fff;border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid #eee;}
+.card-title{font-size:10px;font-weight:700;color:#999;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.field label{font-size:11px;color:var(--muted);font-weight:600;}
+.field input,.field textarea,.field select{
+  padding:10px 12px;border:1px solid var(--border);border-radius:8px;
+  font-size:14px;font-family:inherit;color:var(--text);background:#fff;
+  -webkit-appearance:none;appearance:none;
+}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--navy);}
+.field textarea{resize:none;min-height:70px;line-height:1.6;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+/* 품목 */
+.item-card{background:#fff;border:1px solid #eee;border-radius:10px;padding:12px;margin-bottom:8px;position:relative;}
+.item-no{font-size:10px;font-weight:700;color:var(--navy);margin-bottom:8px;}
+.item-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.item-field{display:flex;flex-direction:column;gap:3px;}
+.item-field label{font-size:10px;color:var(--muted);font-weight:600;}
+.item-field input{padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;}
+.item-field input:focus{outline:none;border-color:var(--navy);}
+.item-field input[type=number]{text-align:right;}
+.item-total{text-align:right;font-size:13px;font-weight:700;color:var(--navy);padding-top:6px;border-top:1px dashed #eee;}
+.del-item{position:absolute;top:10px;right:10px;background:none;border:none;font-size:18px;color:#ddd;cursor:pointer;padding:2px 6px;}
+.del-item:active{color:var(--red);}
+.add-item-btn{width:100%;padding:12px;border:1.5px dashed #ccc;border-radius:10px;background:#fafafa;color:#999;font-size:13px;cursor:pointer;font-family:inherit;margin-bottom:12px;}
+.add-item-btn:active{border-color:var(--navy);color:var(--navy);}
+
+/* 합계 */
+.summary-card{background:var(--navy-light);border:1px solid var(--navy);border-radius:10px;padding:14px;margin-bottom:12px;}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;}
+.summary-row.total{border-top:1px solid var(--navy);margin-top:6px;padding-top:10px;}
+.summary-row.total .lbl{font-size:15px;font-weight:700;color:var(--navy);}
+.summary-row.total .val{font-size:18px;font-weight:800;color:var(--navy);}
+.summary-row .lbl{color:var(--muted);}
+.summary-row .val{font-weight:600;}
+
+/* 직인 */
+.seal-box{border:2px dashed #ddd;border-radius:10px;padding:20px;text-align:center;cursor:pointer;}
+.seal-box.on{border-style:solid;border-color:var(--navy);background:#f8fbff;}
+.seal-box img{max-width:100px;max-height:100px;object-fit:contain;}
+.seal-hint{font-size:12px;color:#bbb;margin-top:6px;}
+
+/* 미리보기 */
+.preview-wrap{background:#e8e8e0;padding:16px;min-height:100%;}
+.a4{background:#fff;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,0.12);padding:24px 22px;font-size:11px;}
+.q-title{text-align:center;font-size:20px;font-weight:800;letter-spacing:8px;border-bottom:2.5px double var(--navy);padding-bottom:10px;margin-bottom:14px;}
+.q-meta{display:flex;justify-content:flex-end;font-size:10px;color:#888;margin-bottom:12px;gap:12px;}
+.q-parties{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.q-party{border:1px solid #ccc;padding:8px 10px;font-size:10px;position:relative;}
+.q-plbl{font-size:9px;font-weight:800;color:var(--navy);letter-spacing:1px;margin-bottom:5px;}
+.q-party table{width:100%;border-collapse:collapse;}
+.q-party table td{padding:1.5px 0;vertical-align:top;}
+.q-party table td:first-child{color:#888;width:52px;white-space:nowrap;}
+.seal-on{position:absolute;bottom:6px;right:6px;width:55px;height:55px;object-fit:contain;opacity:0.85;}
+.q-total{background:#eef3f8;border:1px solid var(--navy);padding:8px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.q-total .lbl{font-size:11px;font-weight:700;color:var(--navy);}
+.q-total .amt{font-size:15px;font-weight:800;color:var(--navy);}
+.q-tbl{width:100%;border-collapse:collapse;font-size:9.5px;margin-bottom:10px;table-layout:fixed;}
+.q-tbl th{background:var(--navy);color:#fff;padding:5px 4px;text-align:center;}
+.q-tbl td{padding:4px 4px;border-bottom:1px solid #eee;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.q-tbl .sub td{background:#f8f8f8;font-weight:700;}
+.q-tbl .tot td{background:var(--navy);color:#fff;font-weight:700;padding:5px 4px;}
+.q-note{font-size:10px;color:#555;border-left:2px solid var(--navy);padding-left:8px;margin-top:10px;line-height:1.7;}
+.q-bank{margin-top:10px;border:1px solid #eee;padding:8px 10px;font-size:10px;}
+.q-bank-t{font-size:9px;font-weight:700;color:#999;letter-spacing:1px;margin-bottom:5px;}
+.q-bank table{border-collapse:collapse;}
+.q-bank table td{padding:1.5px 8px 1.5px 0;}
+.q-bank table td:first-child{color:#999;width:55px;}
+
+/* 하단 버튼 */
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;padding:10px 14px;display:flex;gap:8px;z-index:100;}
+.btn-main{flex:1.5;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-main:active{background:var(--navy-dark);}
+.btn-sub{flex:1;padding:13px 6px;background:#fff;color:var(--navy);border:1.5px solid var(--navy);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center;}
+.btn-sub:active{background:#f0f4f8;}
+
+/* 설치 배너 */
+.install-banner{background:#1d4e89;color:#fff;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;font-size:12px;flex-shrink:0;}
+.install-banner button{background:#fff;color:#1d4e89;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;}
+.install-banner .close-btn{background:none;color:#fff;border:none;font-size:18px;padding:0 4px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div id="installBanner" style="display:none;" class="install-banner">
+    <span>📱 홈 화면에 앱으로 설치하기</span>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button id="installBtn">설치</button>
+      <button class="close-btn" onclick="document.getElementById('installBanner').style.display='none'">×</button>
+    </div>
+  </div>
+
+  <div class="topbar">
+    <div>
+      <h1>신도OA디지털</h1>
+      <div class="sub">견적서 작성 시스템</div>
+    </div>
+    <div style="font-size:11px;opacity:0.7;" id="todayDate"></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showPage('input')">✏️ 입력</div>
+    <div class="tab" onclick="showPage('preview')">👁 미리보기</div>
+    <div class="tab" onclick="showPage('settings')">⚙️ 설정</div>
+  </div>
+
+  <div class="content">
+
+    <!-- 입력 페이지 -->
+    <div class="page active" id="page-input">
+
+      <div class="card">
+        <div class="card-title">견적 정보</div>
+        <div class="row2">
+          <div class="field"><label>문서번호</label><input type="text" id="docNo" placeholder="Q-2025-001" oninput="render()"></div>
+          <div class="field"><label>견적일자</label><input type="date" id="docDate" oninput="render()"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">공급받는자 (고객사)</div>
+        <div class="field"><label>회사명 / 성함</label><input type="text" id="bName" placeholder="고객사명" oninput="render()"></div>
+        <div class="row2">
+          <div class="field"><label>담당자</label><input type="text" id="bContact" placeholder="담당자명" oninput="render()"></div>
+          <div class="field"><label>연락처</label><input type="tel" id="bTel" placeholder="010-0000-0000" oninput="render()"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">품목 내역</div>
+        <div id="itemsList"></div>
+        <button class="add-item-btn" onclick="addItem()">+ 품목 추가</button>
+
+        <div class="row2" style="margin-bottom:8px;">
+          <div class="field">
+            <label>부가세</label>
+            <select id="vatType" onchange="render()">
+              <option value="10">포함 (10%)</option>
+              <option value="0">별도 (10%)</option>
+              <option value="exempt">면세</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>할인율 (%)</label>
+            <input type="number" id="discRate" placeholder="0" min="0" max="100" oninput="render()">
+          </div>
+        </div>
+
+        <div class="summary-card" id="summaryCard"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">메모 및 특이사항</div>
+        <div class="field"><textarea id="note" oninput="render()"></textarea></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">입금 계좌</div>
+        <div class="row2">
+          <div class="field"><label>은행명</label><input type="text" id="bankName" placeholder="국민은행" oninput="render()"></div>
+          <div class="field"><label>계좌번호</label><input type="text" id="bankAcc" placeholder="000-00-000000" oninput="render()"></div>
+        </div>
+        <div class="field"><label>예금주</label><input type="text" id="bankHolder" placeholder="신도OA디지털" oninput="render()"></div>
+      </div>
+
+    </div>
+
+    <!-- 미리보기 페이지 -->
+    <div class="page" id="page-preview">
+      <div class="preview-wrap">
+        <div class="a4" id="previewDoc"></div>
+      </div>
+    </div>
+
+    <!-- 설정 페이지 -->
+    <div class="page" id="page-settings">
+      <div class="card">
+        <div class="card-title">공급자 정보 (고정)</div>
+        <div class="field"><label>사업자번호</label><input type="text" id="sRegNo" oninput="render()"></div>
+        <div class="field"><label>상호</label><input type="text" id="sName" oninput="render()"></div>
+        <div class="row2">
+          <div class="field"><label>전화</label><input type="tel" id="sTel" oninput="render()"></div>
+          <div class="field"><label>팩스</label><input type="tel" id="sFax" oninput="render()"></div>
+        </div>
+        <div class="field"><label>주소</label><input type="text" id="sAddr" oninput="render()"></div>
+        <div class="field"><label>대표자</label><input type="text" id="sCeo" oninput="render()"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">직인 (도장)</div>
+        <div class="seal-box" id="sealBox" onclick="document.getElementById('sealFile').click()">
+          <div id="sealPh">
+            <div style="font-size:36px;">🔏</div>
+            <div class="seal-hint">탭하여 직인 이미지 업로드</div>
+            <div style="font-size:11px;color:#ccc;margin-top:4px;">PNG (배경 투명 권장)</div>
+          </div>
+          <img id="sealPreview" style="display:none;" alt="직인">
+        </div>
+        <input type="file" id="sealFile" accept="image/*" style="display:none;" onchange="loadSeal(this)">
+        <button onclick="clearSeal()" id="clearSealBtn" style="display:none;margin-top:8px;width:100%;padding:8px;background:none;border:1px solid #ddd;border-radius:8px;color:#999;font-size:12px;cursor:pointer;font-family:inherit;">직인 제거</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">전송 정보</div>
+        <div class="field"><label>이메일</label><input type="email" id="cfgEmail" value="sindoida@naver.com" oninput="saveConfig()"></div>
+        <div class="field"><label>카카오 ID</label><input type="text" id="cfgKakao" value="ksg227@kakao.com" oninput="saveConfig()"></div>
+        <div class="field"><label>웹팩스 번호</label><input type="text" id="cfgFax" value="031-601-8643" oninput="saveConfig()"></div>
+      </div>
+
+      <div class="card" style="text-align:center;color:#aaa;font-size:11px;line-height:1.8;">
+        <div style="font-size:13px;font-weight:700;color:#555;margin-bottom:8px;">신도OA디지털 견적서 v1.0</div>
+        사업자번호: 134-16-53325<br>
+        대표: 국승구<br>
+        Tel: 031-433-2480
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 하단 버튼 -->
+  <div class="bottom-bar">
+    <button class="btn-main" onclick="downloadPDF()">📄 PDF 저장</button>
+    <button class="btn-sub" onclick="openKakao()">💬 카톡</button>
+    <button class="btn-sub" onclick="openEmail()">✉️ 메일</button>
+    <button class="btn-sub" onclick="openFax()">📠 팩스</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+let items=[{name:'',unit:'',qty:1,price:0,note:''},{name:'',unit:'',qty:1,price:0,note:''}];
+let sealUrl=null;
+let deferredPrompt=null;
+
+const v=id=>document.getElementById(id)?.value||'';
+const fmt=n=>Math.round(n).toLocaleString('ko-KR');
+const el=id=>document.getElementById(id);
+
+// 탭 전환
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el('page-'+name).classList.add('active');
+  const tabs=['input','preview','settings'];
+  document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
+  if(name==='preview') render();
+}
+
+// 품목
+function addItem(){
+  items.push({name:'',unit:'',qty:1,price:0,note:''});
+  renderItems();render();
+}
+function removeItem(i){
+  if(items.length<=1)return;
+  items.splice(i,1);renderItems();render();
+}
+function renderItems(){
+  el('itemsList').innerHTML=items.map((it,i)=>`
+    <div class="item-card">
+      <div class="item-no">품목 ${i+1}</div>
+      <button class="del-item" onclick="removeItem(${i})">×</button>
+      <div class="item-grid">
+        <div class="item-field" style="grid-column:1/-1"><label>품목명</label>
+          <input type="text" value="${escHtml(it.name)}" placeholder="품목명" oninput="items[${i}].name=this.value;render()"></div>
+        <div class="item-field"><label>단위</label>
+          <input type="text" value="${escHtml(it.unit)}" placeholder="개/EA/식" oninput="items[${i}].unit=this.value;render()"></div>
+        <div class="item-field"><label>수량</label>
+          <input type="number" value="${it.qty}" min="1" oninput="items[${i}].qty=+this.value||1;render()"></div>
+        <div class="item-field"><label>공급가액 (원)</label>
+          <input type="number" value="${it.price}" min="0" oninput="items[${i}].price=+this.value||0;render()"></div>
+        <div class="item-field"><label>비고</label>
+          <input type="text" value="${escHtml(it.note)}" placeholder="특이사항" oninput="items[${i}].note=this.value;render()"></div>
+      </div>
+      <div class="item-total">합계: ₩ ${fmt(it.qty*it.price)} 원</div>
+    </div>`).join('');
+}
+
+function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function calcTotals(){
+  const sub=items.reduce((s,it)=>s+it.qty*it.price,0);
+  const dr=parseFloat(v('discRate'))||0;
+  const disc=Math.round(sub*dr/100);
+  const after=sub-disc;
+  const vt=v('vatType');
+  let vat=0,total=after;
+  if(vt==='10'){vat=Math.round(after/11);total=after;}
+  else if(vt==='0'){vat=Math.round(after*0.1);total=after+vat;}
+  return{sub,disc,after,vat,total,vt};
+}
+
+function render(){
+  const t=calcTotals();
+  // 합계 카드
+  const vatLabel=t.vt==='exempt'?'면세':'부가세 (10%)';
+  el('summaryCard').innerHTML=`
+    ${t.disc>0?`<div class="summary-row"><span class="lbl">소계</span><span class="val">₩ ${fmt(t.sub)}</span></div>`:''}
+    ${t.disc>0?`<div class="summary-row"><span class="lbl" style="color:var(--red)">할인 (${v('discRate')}%)</span><span class="val" style="color:var(--red)">- ₩ ${fmt(t.disc)}</span></div>`:''}
+    ${t.vt!=='exempt'?`<div class="summary-row"><span class="lbl">${vatLabel}</span><span class="val">₩ ${fmt(t.vat)}</span></div>`:''}
+    <div class="summary-row total"><span class="lbl">합계금액</span><span class="val">₩ ${fmt(t.total)}</span></div>`;
+
+  // 미리보기 (현재 미리보기 탭일 때만)
+  if(el('page-preview').classList.contains('active')) renderPreview(t);
+}
+
+function renderPreview(t){
+  if(!t) t=calcTotals();
+  const dd=v('docDate')||new Date().toISOString().slice(0,10);
+  const sealHtml=sealUrl?`<img class="seal-on" src="${sealUrl}" alt="직인">`:'';
+  const vatLabel=t.vt==='exempt'?'면세':'부가세 (10%)';
+  const rows=items.map((it,i)=>`<tr>
+    <td>${i+1}</td><td style="text-align:left;overflow:hidden;text-overflow:ellipsis;">${escHtml(it.name)||'-'}</td>
+    <td>${escHtml(it.unit)||'-'}</td><td>${fmt(it.qty)}</td>
+    <td style="text-align:right;">${fmt(it.price)}</td>
+    <td style="text-align:right;font-weight:600;">${fmt(it.qty*it.price)}</td>
+    <td style="font-size:9px;color:#888;">${escHtml(it.note)||''}</td></tr>`).join('');
+  const discRow=t.disc>0?`<tr class="sub"><td colspan="5" style="text-align:right;">할인(${v('discRate')}%)</td><td style="text-align:right;color:var(--red);">-${fmt(t.disc)}</td><td></td></tr>`:'';
+  const vatRow=t.vt!=='exempt'?`<tr class="sub"><td colspan="5" style="text-align:right;">${vatLabel}</td><td style="text-align:right;">${fmt(t.vat)}</td><td></td></tr>`:'';
+  const noteHtml=v('note')?`<div class="q-note">${escHtml(v('note')).replace(/\n/g,'<br>')}</div>`:'';
+  const bankHtml=(v('bankName')||v('bankAcc'))?`<div class="q-bank"><div class="q-bank-t">입금 계좌</div><table><tr><td>은행</td><td>${escHtml(v('bankName'))}</td></tr><tr><td>계좌번호</td><td>${escHtml(v('bankAcc'))}</td></tr><tr><td>예금주</td><td>${escHtml(v('bankHolder'))}</td></tr></table></div>`:'';
+  el('previewDoc').innerHTML=`
+    <div class="q-title">견 적 서</div>
+    <div class="q-meta"><span>No. ${escHtml(v('docNo'))||'—'}</span><span>${dd}</span></div>
+    <div class="q-parties">
+      <div class="q-party"><div class="q-plbl">공급받는자</div><table>
+        <tr><td>상호</td><td><b>${escHtml(v('bName'))||'—'}</b> 귀중</td></tr>
+        <tr><td>담당</td><td>${escHtml(v('bContact'))||'—'}</td></tr>
+        <tr><td>연락</td><td>${escHtml(v('bTel'))||'—'}</td></tr>
+      </table></div>
+      <div class="q-party"><div class="q-plbl">공급자</div><table>
+        <tr><td>사업자</td><td>${escHtml(v('sRegNo'))||'—'}</td></tr>
+        <tr><td>상호</td><td><b>${escHtml(v('sName'))||'—'}</b></td></tr>
+        <tr><td>전화</td><td>${escHtml(v('sTel'))||'—'}</td></tr>
+        <tr><td>팩스</td><td>${escHtml(v('sFax'))||'—'}</td></tr>
+        <tr><td>대표</td><td>${escHtml(v('sCeo'))||'—'} (인)</td></tr>
+      </table>${sealHtml}</div>
+    </div>
+    <div class="q-total"><span class="lbl">총 견적금액</span><span class="amt">₩ ${fmt(t.total)} 원</span></div>
+    <table class="q-tbl">
+      <colgroup><col style="width:18px"><col><col style="width:22px"><col style="width:24px"><col style="width:48px"><col style="width:48px"><col style="width:38px"></colgroup>
+      <thead><tr><th>No</th><th>품목</th><th>단위</th><th>수량</th><th>공급가액</th><th>합계</th><th>비고</th></tr></thead>
+      <tbody>${rows}
+        <tr class="sub"><td colspan="5" style="text-align:right;">소계</td><td style="text-align:right;">${fmt(t.sub)}</td><td></td></tr>
+        ${discRow}${vatRow}
+        <tr class="tot"><td colspan="5" style="text-align:right;">합계금액</td><td style="text-align:right;">₩${fmt(t.total)}</td><td></td></tr>
+      </tbody>
+    </table>
+    ${noteHtml}${bankHtml}`;
+}
+
+// 직인
+function loadSeal(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    sealUrl=e.target.result;
+    el('sealPreview').src=sealUrl;
+    el('sealPreview').style.display='block';
+    el('sealPh').style.display='none';
+    el('sealBox').classList.add('on');
+    el('clearSealBtn').style.display='block';
+    localStorage.setItem('sealUrl', sealUrl);
+    render();
+  };r.readAsDataURL(file);
+}
+function clearSeal(){
+  sealUrl=null;
+  el('sealPreview').style.display='none';
+  el('sealPh').style.display='block';
+  el('sealBox').classList.remove('on');
+  el('clearSealBtn').style.display='none';
+  el('sealFile').value='';
+  localStorage.removeItem('sealUrl');
+  render();
+}
+
+// PDF
+function downloadPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF('p','mm','a4');
+  const t=calcTotals();
+  const dd=v('docDate')||new Date().toISOString().slice(0,10);
+  const mL=18,mR=192,pW=210;
+  let y=18;
+  doc.setFontSize(22);doc.setFont('helvetica','bold');doc.setTextColor(26,58,92);
+  doc.text('견  적  서',pW/2,y+8,{align:'center'});y+=18;
+  doc.setDrawColor(26,58,92);doc.setLineWidth(0.8);doc.line(mL,y,mR,y);y+=6;
+  doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
+  doc.text('문서번호: '+(v('docNo')||'—'),mL,y);
+  doc.text('견적일자: '+dd,mR,y,{align:'right'});y+=10;
+  const bxW=(mR-mL-5)/2;const bxH=38;
+  doc.setDrawColor(180,180,180);doc.setLineWidth(0.3);
+  doc.rect(mL,y,bxW,bxH);doc.rect(mL+bxW+5,y,bxW,bxH);
+  doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(26,58,92);
+  doc.text('공급받는자',mL+2,y+4.5);doc.text('공급자',mL+bxW+7,y+4.5);
+  doc.setFont('helvetica','normal');doc.setTextColor(50,50,50);
+  [`상호: ${v('bName')||'—'} 귀중`,`담당: ${v('bContact')||'—'}`,`연락: ${v('bTel')||'—'}`].forEach((ln,i)=>doc.text(ln,mL+2,y+10+i*7));
+  [`사업자: ${v('sRegNo')||'—'}`,`상호: ${v('sName')||'—'}`,`전화: ${v('sTel')||'—'}`,`팩스: ${v('sFax')||'—'}`,`주소: ${v('sAddr')||'—'}`,`대표: ${v('sCeo')||'—'} (인)`].forEach((ln,i)=>doc.text(ln,mL+bxW+7,y+10+i*5));
+  if(sealUrl){try{doc.addImage(sealUrl,'PNG',mR-22,y+14,20,20);}catch(e){}}
+  y+=bxH+8;
+  doc.setFillColor(238,243,248);doc.setDrawColor(26,58,92);doc.setLineWidth(0.5);
+  doc.rect(mL,y,mR-mL,11,'FD');
+  doc.setFontSize(9.5);doc.setFont('helvetica','bold');doc.setTextColor(26,58,92);
+  doc.text('총 견적금액',mL+3,y+7.5);
+  doc.text('₩ '+fmt(t.total)+' 원',mR-2,y+7.5,{align:'right'});y+=17;
+  const trows=items.map((it,i)=>[i+1,it.name||'-',it.unit||'-',fmt(it.qty),fmt(it.price),fmt(it.qty*it.price),it.note||'']);
+  trows.push(['','','','','소계',fmt(t.sub),'']);
+  if(t.disc>0)trows.push(['','','','',`할인(${v('discRate')}%)`,'- '+fmt(t.disc),'']);
+  if(t.vt!=='exempt')trows.push(['','','','','부가세(10%)',fmt(t.vat),'']);
+  trows.push(['','','','','합계금액','₩ '+fmt(t.total),'']);
+  doc.autoTable({startY:y,head:[['No.','품목','단위','수량','공급가액','합계','비고']],body:trows,
+    margin:{left:mL,right:pW-mR},
+    styles:{fontSize:8,cellPadding:2.5,font:'helvetica'},
+    headStyles:{fillColor:[26,58,92],textColor:255,fontStyle:'bold',halign:'center'},
+    columnStyles:{0:{halign:'center',cellWidth:10},1:{halign:'left'},2:{halign:'center',cellWidth:12},3:{halign:'center',cellWidth:14},4:{halign:'right',cellWidth:26},5:{halign:'right',cellWidth:26},6:{halign:'left',cellWidth:22}}
+  });
+  y=doc.lastAutoTable.finalY+8;
+  if(v('note')){doc.setFontSize(8);doc.setTextColor(80,80,80);doc.setDrawColor(26,58,92);doc.setLineWidth(1);doc.line(mL,y,mL,y+14);doc.setLineWidth(0.3);doc.text(v('note'),mL+4,y+5,{maxWidth:mR-mL-8});y+=18;}
+  if(v('bankName')||v('bankAcc')){doc.setFontSize(8);doc.setTextColor(100,100,100);doc.text(`입금계좌: ${v('bankName')} ${v('bankAcc')} (예금주: ${v('bankHolder')})`,mL,y);}
+  doc.save(`견적서_${v('bName')||'고객'}_${dd}.pdf`);
+}
+
+function openEmail(){
+  const t=calcTotals();
+  const email=v('cfgEmail')||'sindoida@naver.com';
+  const sub=encodeURIComponent(`[견적서] ${v('sName')} - ${v('bName')} 귀중`);
+  const body=encodeURIComponent(`안녕하세요, ${v('bContact')} 담당자님.\n\n${v('sName')}에서 견적서를 송부드립니다.\n\n총 견적금액: ₩${fmt(t.total)}원\n견적일자: ${v('docDate')}\n\n상세 내용은 첨부 PDF 파일을 확인해 주시기 바랍니다.\n감사합니다.\n\n${v('sName')}\n전화: ${v('sTel')} | 팩스: ${v('sFax')}`);
+  window.open(`mailto:${email}?subject=${sub}&body=${body}`);
+}
+function openKakao(){
+  const t=calcTotals();
+  const kakao=v('cfgKakao')||'ksg227@kakao.com';
+  alert(`카카오톡 전송 안내\n\n수신: ${kakao}\n\n먼저 [PDF 저장]으로 파일을 저장하신 후,\n카카오톡에서 파일 첨부로 전송해 주세요.\n\n[견적요약]\n고객사: ${v('bName')}\n총금액: ₩${fmt(t.total)}원`);
+}
+function openFax(){
+  const t=calcTotals();
+  const fax=v('cfgFax')||'031-601-8643';
+  alert(`웹팩스 전송 안내\n\n수신 팩스: ${fax}\n\n[PDF 저장] 후 아래 사이트에서 전송:\n• 팩스24: fax24.co.kr\n• eFax: efax.co.kr\n\n[견적요약]\n고객사: ${v('bName')}\n총금액: ₩${fmt(t.total)}원`);
+}
+
+// 설정 저장/불러오기
+function saveConfig(){
+  const cfg={
+    sRegNo:v('sRegNo'),sName:v('sName'),sTel:v('sTel'),sFax:v('sFax'),
+    sAddr:v('sAddr'),sCeo:v('sCeo'),
+    cfgEmail:v('cfgEmail'),cfgKakao:v('cfgKakao'),cfgFax:v('cfgFax'),
+    bankName:v('bankName'),bankAcc:v('bankAcc'),bankHolder:v('bankHolder')
+  };
+  localStorage.setItem('sindooa_cfg',JSON.stringify(cfg));
+}
+function loadConfig(){
+  const raw=localStorage.getItem('sindooa_cfg');
+  const defaults={
+    sRegNo:'134-16-53325',sName:'신도OA디지털',sTel:'031-433-2480',sFax:'031-601-8643',
+    sAddr:'경기도 시흥시 공단1대로 244 (정왕동, 19/227)',sCeo:'국승구',
+    cfgEmail:'sindoida@naver.com',cfgKakao:'ksg227@kakao.com',cfgFax:'031-601-8643',
+    bankName:'',bankAcc:'',bankHolder:'신도OA디지털'
+  };
+  const cfg=raw?{...defaults,...JSON.parse(raw)}:defaults;
+  Object.keys(cfg).forEach(k=>{if(el(k)) el(k).value=cfg[k];});
+  // 직인 불러오기
+  const savedSeal=localStorage.getItem('sealUrl');
+  if(savedSeal){
+    sealUrl=savedSeal;
+    el('sealPreview').src=sealUrl;
+    el('sealPreview').style.display='block';
+    el('sealPh').style.display='none';
+    el('sealBox').classList.add('on');
+    el('clearSealBtn').style.display='block';
+  }
+}
+
+// 설정 변경 시 자동저장
+['sRegNo','sName','sTel','sFax','sAddr','sCeo','cfgEmail','cfgKakao','cfgFax','bankName','bankAcc','bankHolder']
+  .forEach(id=>{const e=el(id);if(e) e.addEventListener('input',saveConfig);});
+
+// PWA 설치
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  el('installBanner').style.display='flex';
+});
+el('installBtn').addEventListener('click',()=>{
+  if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;el('installBanner').style.display='none';});}
+});
+
+// Service Worker 등록
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// 초기화
+el('docDate').value=new Date().toISOString().slice(0,10);
+el('todayDate').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
+document.getElementById('note').value='견적 후 1주일 이내 유효합니다.';
+loadConfig();
+renderItems();
+render();
+</script>
+</body>
+</html>
