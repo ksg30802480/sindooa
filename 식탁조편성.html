@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이삭학년 식탁 조편성</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:#f5f0ff;color:#1a1a2e;min-height:100vh;}
+#app{max-width:960px;margin:0 auto;padding:1rem 1rem 3rem;}
+h1{font-size:22px;font-weight:700;text-align:center;margin-bottom:4px;}
+.sub{font-size:13px;color:#888;text-align:center;margin-bottom:1.2rem;}
+.tab-row{display:flex;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:1rem;}
+.tab-btn{flex:1;padding:12px;font-size:14px;font-weight:500;border:none;cursor:pointer;font-family:inherit;background:#fff;color:#888;transition:all 0.2s;}
+.tab-btn.on{background:#7B2FA0;color:#fff;}
+.btn-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;}
+.btn{flex:1;min-width:70px;padding:12px 6px;font-size:13px;font-weight:500;border:none;border-radius:12px;cursor:pointer;font-family:inherit;transition:all 0.2s;}
+.btn:disabled{opacity:0.35;cursor:default;}
+.b1{background:#7B2FA0;color:#fff;}
+.b2{background:#4361EE;color:#fff;}
+.b3{background:#E8760A;color:#fff;}
+.b4{background:#2EC4B6;color:#fff;}
+.b5{background:#FF6B6B;color:#fff;}
+.banner{text-align:center;padding:8px;border-radius:10px;font-size:13px;font-weight:500;margin-bottom:1rem;display:none;}
+.banner.mixed{background:#F3E8FF;color:#7B2FA0;}
+.banner.same{background:#E0ECFF;color:#4361EE;}
+.confirmed-banner{background:#FF6B6B;color:#fff;border-radius:12px;padding:10px;text-align:center;font-size:14px;font-weight:500;margin-bottom:1rem;display:none;}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;}
+@media(max-width:580px){.grid{grid-template-columns:repeat(2,1fr);}}
+.card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.07);}
+.card-head{padding:9px 12px;font-size:14px;font-weight:700;color:#fff;display:flex;justify-content:space-between;}
+.card-body{padding:8px 10px 10px;}
+.mrow{display:flex;align-items:center;gap:5px;padding:4px 0;border-bottom:0.5px solid #f3f3f3;font-size:13px;}
+.mrow:last-child{border-bottom:none;}
+.mb{font-size:10px;padding:1px 5px;border-radius:8px;font-weight:500;flex-shrink:0;}
+.mm{background:#E0ECFF;color:#2563EB;}
+.mf{background:#FFE4F0;color:#DB2777;}
+.mheart{font-size:10px;color:#FF6B6B;flex-shrink:0;}
+.mchild{font-size:10px;color:#7B2FA0;margin-left:2px;}
+.dept{font-size:10px;color:#bbb;flex-shrink:0;}
+.stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;}
+.chip{background:#fff;border-radius:8px;padding:5px 10px;font-size:12px;box-shadow:0 1px 5px rgba(0,0,0,0.07);}
+.hint{text-align:center;padding:2rem;color:#bbb;font-size:14px;}
+.tab-screen{display:none;}
+.tab-screen.on{display:block;}
+.hist-wrap{background:#fff;border-radius:14px;padding:1rem;box-shadow:0 2px 10px rgba(0,0,0,0.07);}
+.hist-title{font-size:14px;font-weight:700;margin-bottom:8px;color:#555;}
+.hitem{font-size:13px;color:#555;padding:8px 6px;border-bottom:0.5px solid #f0f0f0;cursor:pointer;border-radius:6px;}
+.hitem:last-child{border-bottom:none;}
+.hitem:hover{background:#f8f0ff;}
+.hdate{font-weight:600;color:#7B2FA0;margin-bottom:2px;font-size:13px;}
+.hteams{font-size:12px;color:#888;}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;}
+.modal.on{display:flex;}
+.modal-inner{background:#fff;border-radius:16px;padding:1.5rem;max-width:860px;width:95%;max-height:85vh;overflow-y:auto;}
+.modal-top{font-size:16px;font-weight:700;margin-bottom:1rem;display:flex;justify-content:space-between;}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:#888;}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+@media(max-width:580px){.mgrid{grid-template-columns:repeat(2,1fr);}}
+.mcard{border-radius:10px;overflow:hidden;}
+.mcard-head{padding:7px 10px;font-size:13px;font-weight:700;color:#fff;}
+.mcard-body{padding:6px 10px;background:#fafafa;font-size:12px;color:#333;line-height:1.9;}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>🍽️ 이삭학년 식탁 조편성</h1>
+  <p class="sub">6조 × 4명 기준 | 부부·관계 분리 | 부서 균등 배분</p>
+  <div class="tab-row">
+    <button class="tab-btn on" onclick="switchTab('t1',0)">🎲 조편성</button>
+    <button class="tab-btn" onclick="switchTab('t2',1)">📁 확정 기록</button>
+  </div>
+  <div id="confirmed-banner" class="confirmed-banner">✅ 조편성이 확정 저장되었습니다!</div>
+  <div id="t1" class="tab-screen on">
+    <div class="btn-row">
+      <button class="btn b1" onclick="doAssign('mixed')">👫 혼성</button>
+      <button class="btn b2" onclick="doAssign('same')">🚻 동성</button>
+      <button class="btn b3" id="br1" onclick="doAssign('mixed')" disabled>🔀 혼성 다시</button>
+      <button class="btn b4" id="br2" onclick="doAssign('same')" disabled>🔄 동성 다시</button>
+      <button class="btn b5" id="bconf" onclick="doConfirm()" disabled>✅ 확정</button>
+    </div>
+    <div id="banner" class="banner"></div>
+    <div class="stats" id="stats"></div>
+    <div class="grid" id="grid"><div class="hint" style="grid-column:1/-1;">혼성 또는 동성 버튼을 눌러 조편성을 시작하세요</div></div>
+  </div>
+  <div id="t2" class="tab-screen">
+    <div class="hist-wrap">
+      <div class="hist-title">📁 이전 확정 기록 (최근 3건)</div>
+      <div id="hlist"><p style="color:#bbb;font-size:13px;padding:8px 0;">저장된 기록이 없습니다</p></div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="modal" onclick="closeModal(event)">
+  <div class="modal-inner">
+    <div class="modal-top"><span id="modal-title">확정 명단</span><button class="modal-close" onclick="document.getElementById('modal').classList.remove('on')">✕</button></div>
+    <div class="mgrid" id="mgrid"></div>
+  </div>
+</div>
+<script>
+var COLORS=['#FF6B6B','#4361EE','#2EC4B6','#FF9F1C','#7B2FA0','#E8760A'];
+var NAMES=['1조','2조','3조','4조','5조','6조'];
+
+var PP=[
+  {n:'임천성',d:'임원단',g:'M',c:null,p:null},
+  {n:'이영득',d:'임원단',g:'M',c:'최문희',p:null},
+  {n:'백승원',d:'임원단',g:'M',c:'김수빈',p:null},
+  {n:'최문희',d:'임원단',g:'F',c:'이영득',p:null},
+  {n:'김수아',d:'임원단',g:'F',c:null,p:null},
+  {n:'김수빈',d:'임원단',g:'F',c:'백승원',p:null},
+  {n:'유진순',d:'임원단',g:'F',c:null,p:'김예성'},
+  {n:'홍사랑',d:'임원단',g:'F',c:'정기영',p:null},
+  {n:'김홍진',d:'5학년',g:'M',c:null,p:null},
+  {n:'이래미',d:'5학년',g:'F',c:null,p:'박솔은'},
+  {n:'석경미',d:'5학년',g:'F',c:null,p:null},
+  {n:'국승구',d:'6학년',g:'M',c:null,p:null},
+  {n:'김형석',d:'6학년',g:'M',c:null,p:null},
+  {n:'송은자',d:'6학년',g:'F',c:null,p:null},
+  {n:'송봉란',d:'6학년',g:'F',c:null,p:null},
+  {n:'박솔은',d:'6학년',g:'F',c:null,p:'이래미',ch:'이래미'},
+  {n:'정기영',d:'신입반',g:'M',c:'홍사랑',p:null},
+  {n:'김혜진',d:'신입반',g:'F',c:null,p:null},
+  {n:'배수연',d:'신입반',g:'F',c:null,p:null},
+  {n:'서은자',d:'신입반',g:'F',c:null,p:null},
+  {n:'이선영',d:'신입반',g:'F',c:null,p:null},
+  {n:'진희은',d:'주니어',g:'F',c:null,p:null},
+  {n:'김예성',d:'주니어',g:'M',c:null,p:'유진순',ch:'유진순'},
+];
+
+var EX=[
+  ['임천성','정기영','홍사랑','김혜진'],
+  ['임천성','최문희','정기영','국승구','이래미'],
+];
+/* 가족 분리: 각 배열이 하나의 가족, 서로 다른 조여야 함 */
+var FAMILIES=[
+  ['유진순','김예성'],  /* 유진순 가족 */
+  ['이래미','박솔은'],  /* 이래미 가족 */
+];
+
+var curTeams=null, curMode=null, confirmed=false;
+
+function sh(a){
+  var b=a.slice();
+  for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;}
+  return b;
+}
+
+function canPlace(team, p){
+  var ns=team.map(function(x){return x.n;});
+  if(p.c && ns.indexOf(p.c)>=0) return false;
+  for(var i=0;i<team.length;i++){if(team[i].c===p.n) return false;}
+  for(var g=0;g<EX.length;g++){
+    if(EX[g].indexOf(p.n)<0) continue;
+    var cnt=0;
+    for(var k=0;k<ns.length;k++){if(EX[g].indexOf(ns[k])>=0) cnt++;}
+    if(cnt>=1) return false;
+  }
+  /* 가족 분리: p가 속한 가족과 다른 가족 멤버가 이미 있으면 배제 */
+  var myFamily=-1;
+  for(var f=0;f<FAMILIES.length;f++){
+    if(FAMILIES[f].indexOf(p.n)>=0){myFamily=f;break;}
+  }
+  if(myFamily>=0){
+    for(var f=0;f<FAMILIES.length;f++){
+      if(f===myFamily) continue;
+      for(var k=0;k<ns.length;k++){
+        if(FAMILIES[f].indexOf(ns[k])>=0) return false;
+      }
+    }
+  }
+  return true;
+}
+
+function score(teams){
+  var s=100;
+  teams.forEach(function(team){
+    var ns=team.map(function(x){return x.n;});
+    team.forEach(function(p){
+      if(p.c && ns.indexOf(p.c)>=0) s-=50;
+      if(p.p && ns.indexOf(p.p)<0) s-=40;
+    });
+    EX.forEach(function(grp){
+      var cnt=0;ns.forEach(function(n){if(grp.indexOf(n)>=0)cnt++;});
+      if(cnt>=2) s-=30;
+    });
+    var dc={};
+    team.forEach(function(p){dc[p.d]=(dc[p.d]||0)+1;});
+    for(var k in dc){if(dc[k]>=3) s-=5;}
+  });
+  return s;
+}
+
+function tryMixed(){
+  var teams=[[],[],[],[],[],[]];
+  var paired={};
+
+  /* 1. pairWith 쌍 먼저 같은 조에 */
+  PP.forEach(function(p){
+    if(!p.p || paired[p.n] || paired[p.p]) return;
+    var partner=null;
+    for(var i=0;i<PP.length;i++){if(PP[i].n===p.p){partner=PP[i];break;}}
+    if(!partner) return;
+    var best=-1,bt=-1;
+    for(var t=0;t<6;t++){
+      if(teams[t].length+2>4) continue;
+      if(!canPlace(teams[t],p)) continue;
+      var tmp=teams[t].slice();tmp.push(p);
+      if(!canPlace(tmp,partner)) continue;
+      if(teams[t].length>best){best=teams[t].length;bt=t;}
+    }
+    if(bt<0){
+      for(var t=0;t<6;t++){
+        if(teams[t].length+2<=4){bt=t;break;}
+      }
+    }
+    if(bt>=0){
+      teams[bt].push(p); teams[bt].push(partner);
+      paired[p.n]=true; paired[partner.n]=true;
+    }
+  });
+
+  /* 2. 남자: 각 조에 최소 1명 */
+  var males=sh(PP.filter(function(p){return p.g==='M'&&!paired[p.n];}));
+  var cm=males.filter(function(p){return p.c;});
+  var nm=males.filter(function(p){return !p.c;});
+  var allM=sh(cm).concat(sh(nm));
+  var mAssigned={};
+  allM.forEach(function(p){
+    var cands=[];
+    for(var t=0;t<6;t++){
+      if(!canPlace(teams[t],p)) continue;
+      var mc=0;teams[t].forEach(function(x){if(x.g==='M')mc++;});
+      cands.push({t:t,mc:mc,sz:teams[t].length});
+    }
+    if(!cands.length){for(var t=0;t<6;t++)cands.push({t:t,mc:99,sz:teams[t].length});}
+    cands.sort(function(a,b){return a.mc!==b.mc?a.mc-b.mc:a.sz-b.sz;});
+    teams[cands[0].t].push(p); mAssigned[p.n]=true;
+  });
+
+  /* 3. 여자 배정 */
+  var females=sh(PP.filter(function(p){return p.g==='F'&&!paired[p.n];}));
+  females.forEach(function(p){
+    var cands=[];
+    for(var t=0;t<6;t++){
+      if(teams[t].length>=4) continue;
+      if(!canPlace(teams[t],p)) continue;
+      var dc=0;teams[t].forEach(function(x){if(x.d===p.d)dc++;});
+      cands.push({t:t,dc:dc,sz:teams[t].length});
+    }
+    if(!cands.length){
+      for(var t=0;t<6;t++){if(teams[t].length<4)cands.push({t:t,dc:0,sz:teams[t].length});}
+    }
+    if(!cands.length) return;
+    cands.sort(function(a,b){return a.dc!==b.dc?a.dc-b.dc:a.sz-b.sz;});
+    teams[cands[0].t].push(p);
+  });
+  return teams;
+}
+
+function trySame(){
+  /* 남7명: 2조(4+3) / 여16명: 4조(4+4+4+4) */
+  var mT=[[],[]];
+  var fT=[[],[],[],[]];
+  var paired={};
+
+  /* pairWith 여자쌍 먼저 여자조에 */
+  PP.forEach(function(p){
+    if(!p.p || paired[p.n] || paired[p.p] || p.g!=='F') return;
+    var partner=null;
+    for(var i=0;i<PP.length;i++){if(PP[i].n===p.p&&PP[i].g==='F'){partner=PP[i];break;}}
+    if(!partner) return;
+    var bt=-1,bsz=99;
+    for(var t=0;t<4;t++){
+      if(fT[t].length+2<=4&&fT[t].length<bsz){bsz=fT[t].length;bt=t;}
+    }
+    if(bt>=0){fT[bt].push(p);fT[bt].push(partner);paired[p.n]=true;paired[partner.n]=true;}
+  });
+
+  /* 남자 2조 배분 */
+  var males=sh(PP.filter(function(p){return p.g==='M'&&!paired[p.n];}));
+  var cm=males.filter(function(p){return p.c;});
+  var nm=males.filter(function(p){return !p.c;});
+  sh(cm).concat(sh(nm)).forEach(function(p){
+    var cands=[];
+    for(var t=0;t<2;t++){
+      var lim=t===0?4:3;
+      if(mT[t].length>=lim) continue;
+      if(canPlace(mT[t],p)) cands.push({t:t,sz:mT[t].length});
+    }
+    if(!cands.length){for(var t=0;t<2;t++){var lim=t===0?4:3;if(mT[t].length<lim)cands.push({t:t,sz:mT[t].length});}}
+    if(!cands.length) return;
+    cands.sort(function(a,b){return a.sz-b.sz;});
+    mT[cands[0].t].push(p);
+  });
+
+  /* 여자 4조 배분 */
+  var females=sh(PP.filter(function(p){return p.g==='F'&&!paired[p.n];}));
+  var cf=females.filter(function(p){return p.c;});
+  var nf=females.filter(function(p){return !p.c;});
+  sh(cf).concat(sh(nf)).forEach(function(p){
+    var cands=[];
+    for(var t=0;t<4;t++){
+      if(fT[t].length>=4) continue;
+      if(canPlace(fT[t],p)){
+        var dc=0;fT[t].forEach(function(x){if(x.d===p.d)dc++;});
+        cands.push({t:t,dc:dc,sz:fT[t].length});
+      }
+    }
+    if(!cands.length){for(var t=0;t<4;t++){if(fT[t].length<4)cands.push({t:t,dc:0,sz:fT[t].length});}}
+    if(!cands.length) return;
+    cands.sort(function(a,b){return a.dc!==b.dc?a.dc-b.dc:a.sz-b.sz;});
+    fT[cands[0].t].push(p);
+  });
+
+  var mo=sh([0,1]), fo=sh([0,1,2,3]);
+  return [mT[mo[0]],mT[mo[1]],fT[fo[0]],fT[fo[1]],fT[fo[2]],fT[fo[3]]];
+}
+
+function buildTeams(mode){
+  var best=null, bsc=-999;
+  var fn=mode==='mixed'?tryMixed:trySame;
+  for(var i=0;i<200;i++){
+    var t=fn();
+    var s=score(t);
+    if(s>bsc){bsc=s;best=t;}
+    if(bsc>=100) break;
+  }
+  return best;
+}
+
+function doAssign(mode){
+  if(confirmed) return;
+  curMode=mode; curTeams=buildTeams(mode);
+  render(); enableBtns();
+}
+
+function enableBtns(){
+  document.getElementById('br1').disabled=false;
+  document.getElementById('br2').disabled=false;
+  document.getElementById('bconf').disabled=false;
+}
+
+function render(){
+  var g=document.getElementById('grid'); g.innerHTML='';
+  var s=document.getElementById('stats'); s.innerHTML='';
+  var b=document.getElementById('banner');
+
+  if(curMode==='mixed'){b.className='banner mixed';b.textContent='👫 혼성 모드 — 남녀 함께 배치';}
+  else{b.className='banner same';b.textContent='🚻 동성 모드 — 남자조 / 여자조 분리';}
+  b.style.display='block';
+
+  curTeams.forEach(function(members,ti){
+    var m=members.filter(function(p){return p.g==='M';}).length;
+    var f=members.filter(function(p){return p.g==='F';}).length;
+    var card=document.createElement('div'); card.className='card';
+    var head='<div class="card-head" style="background:'+COLORS[ti]+'"><span>'+NAMES[ti]+'</span><span style="font-size:11px;opacity:0.9;">'+members.length+'명'+(curMode==='mixed'?' 남'+m+'/여'+f:'')+'</span></div>';
+    var body='<div class="card-body">';
+    members.forEach(function(p){
+      var badge=p.g==='M'?'<span class="mb mm">남</span>':'<span class="mb mf">여</span>';
+      var heart=p.c?'<span class="mheart">♥</span>':'';
+      var child=p.ch?'<span class="mchild">👦'+p.ch+' 자녀</span>':'';
+      body+='<div class="mrow">'+badge+'<span style="flex:1;">'+p.n+child+'</span>'+heart+'<span class="dept">'+p.d+'</span></div>';
+    });
+    body+='</div>';
+    card.innerHTML=head+body; g.appendChild(card);
+  });
+
+  var chips=['👥 총 '+PP.length+'명','🍽️ 6조 편성'];
+  curTeams.forEach(function(t,i){chips.push(NAMES[i]+' '+t.length+'명');});
+  chips.forEach(function(txt){var d=document.createElement('div');d.className='chip';d.textContent=txt;s.appendChild(d);});
+}
+
+function doConfirm(){
+  if(confirmed||!curTeams) return;
+  confirmed=true;
+  document.getElementById('br1').disabled=true;
+  document.getElementById('br2').disabled=true;
+  document.getElementById('bconf').disabled=true;
+  document.querySelector('.b1').disabled=true;
+  document.querySelector('.b2').disabled=true;
+  document.getElementById('confirmed-banner').style.display='block';
+  try{
+    var rec={
+      date:new Date().toLocaleString('ko-KR'),
+      mode:curMode==='mixed'?'혼성':'동성',
+      teams:curTeams.map(function(t,i){
+        return{name:NAMES[i],members:t.map(function(p){return p.n+'('+p.d+')';})};
+      })
+    };
+    var h=JSON.parse(localStorage.getItem('tbl_h')||'[]');
+    h.unshift(rec); if(h.length>3)h=h.slice(0,3);
+    localStorage.setItem('tbl_h',JSON.stringify(h));
+  }catch(e){}
+  loadHist();
+}
+
+function switchTab(id,idx){
+  document.querySelectorAll('.tab-screen').forEach(function(s){s.classList.remove('on');});
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('on');});
+  document.getElementById(id).classList.add('on');
+  document.querySelectorAll('.tab-btn')[idx].classList.add('on');
+  if(idx===1) loadHist();
+}
+
+function loadHist(){
+  try{
+    var h=JSON.parse(localStorage.getItem('tbl_h')||'[]');
+    var el=document.getElementById('hlist');
+    if(!h.length){el.innerHTML='<p style="color:#bbb;font-size:13px;padding:8px 0;">저장된 기록이 없습니다</p>';return;}
+    el.innerHTML=h.map(function(r,i){
+      return '<div class="hitem" onclick="openModal('+i+')">'+
+        '<div class="hdate">'+(i===0?'[최근 확정] ':'')+r.date+' · '+r.mode+'</div>'+
+        '<div class="hteams">'+r.teams.map(function(t){return t.name+' '+t.members.length+'명';}).join(' · ')+' 👆 클릭하면 명단 확인</div>'+
+      '</div>';
+    }).join('');
+  }catch(e){}
+}
+
+function openModal(idx){
+  try{
+    var h=JSON.parse(localStorage.getItem('tbl_h')||'[]');
+    var r=h[idx]; if(!r) return;
+    document.getElementById('modal-title').textContent=(idx===0?'[최근 확정] ':'')+r.date+' '+r.mode;
+    var g=document.getElementById('mgrid');
+    g.innerHTML=r.teams.map(function(t,ti){
+      return '<div class="mcard">'+
+        '<div class="mcard-head" style="background:'+COLORS[ti]+'">'+t.name+' '+t.members.length+'명</div>'+
+        '<div class="mcard-body">'+t.members.join('<br>')+'</div>'+
+      '</div>';
+    }).join('');
+    document.getElementById('modal').classList.add('on');
+  }catch(e){}
+}
+
+function closeModal(e){if(e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('on');}
+
+loadHist();
+</script>
+</body>
+</html>
